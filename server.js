@@ -28,15 +28,22 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const port = process.env.PORT || 4000;
  
-// static user details for validation
+/* static user details for validation
 const userData = {
-  userId: "789789",
-  password: "123456",
-  name: "Aman",
-  username: "sherlvick",
+  userId: ["789789","1213"],
+  password: ["123456","sherl@"],
+  name: ["Aman","Ash"],
+  username: ["sherlvick","sunny"],
+  isAdmin: true
+};*/
+const userData = {
+  userId: [],
+  password: [],
+  name: [],
+  username: [],
   isAdmin: true
 };
-
+let count = 0
 // enable CORS
 app.use(cors());
 // parse application/json
@@ -58,9 +65,15 @@ app.post('/signin', function (req, res) {
         message: "Username or Password is required."
       });
     }
-   
+    const index_db = userData.username.indexOf(user)
     // return 401 status if the credential is not match.
-    if (user !== userData.username || pwd !== userData.password) {
+    if (index_db == -1){
+      return res.status(402).json({
+        error: true,
+        message: "Username does not exist. Signup required."
+      });
+    }
+    if (pwd !== userData.password[index_db]) {
       return res.status(401).json({
         error: true,
         message: "Username or Password is wrong."
@@ -68,10 +81,43 @@ app.post('/signin', function (req, res) {
     }
    
     // generate token
-    const token = utils.generateToken(userData);
+    const token = utils.generateToken(userData, index_db);
     // get basic user details
-    const userObj = utils.getCleanUser(userData);
+    const userObj = utils.getCleanUser(userData, index_db);
     // return the token along with user details
+    return res.json({ user: userObj, token });
+  });
+
+  app.post('/signup', function(req, res){
+    const name = req.body.name;
+    const user = req.body.username;
+    const pwd = req.body.password;
+
+    // return 400 status if username/password is not exist
+    if (!user || !pwd || !name) {
+      return res.status(400).json({
+        error: true,
+        message: "Username/Password/Name is required."
+      });
+    }
+    const index_db = userData.username.indexOf(user)
+    //return 402 status if username already exists
+    if (index_db !== -1 ) {
+      return res.status(402).json({
+        error: true,
+        message: "Username already exists."
+      });
+    }
+    userData.username.push(user);
+    userData.name.push(name);
+    userData.password.push(pwd);
+    userData.userId.push(count);
+    count += 1//to increase id so it will be unique
+
+    const token = utils.generateToken(userData, count);
+    // get basic user details
+    const userObj = utils.getCleanUser(userData, count);
+    console.log(userData)
     return res.json({ user: userObj, token });
   });
 
@@ -92,16 +138,16 @@ app.get('/verifyToken', function (req, res) {
         error: true,
         message: "Invalid token."
       });
-   
+      const index = userData.name.indexOf(user.name)
       // return 401 status if the userId does not match.
-      if (user.userId !== userData.userId) {
+      if (index == -1 || user.userId !== userData.userId[index]) {
         return res.status(401).json({
           error: true,
           message: "Invalid user."
         });
       }
       // get basic user details
-      var userObj = utils.getCleanUser(userData);
+      var userObj = utils.getCleanUser(userData, index);
       return res.json({ user: userObj, token });
     });
   });
@@ -136,3 +182,20 @@ app.use(function (req, res, next) {
   app.listen(port, () => {
     console.log('Server started on: ' + port);
   });
+
+[
+  {
+    "userId": 0,
+    "password": "1234",
+    name: 'sumit',
+    username:'sumit',
+    isAdmin: true
+  },
+  {
+    "userId": 1,
+    "password": "1235",
+    name: 'Sunny',
+    username:'sunny',
+    isAdmin: true
+  }
+]

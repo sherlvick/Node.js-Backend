@@ -2,15 +2,15 @@
 var jwt = require('jsonwebtoken');
  
 // generate token and return it
-function generateToken(user) {
+function generateToken(user, index) {
   //1. Don't use password and other sensitive fields
   //2. Use the information that are useful in other parts
   if (!user) return null;
  
   var u = {
-    userId: user.userId,
-    name: user.name,
-    username: user.username,
+    userId: user.userId[index],
+    name: user.name[index],
+    username: user.username[index],
     isAdmin: user.isAdmin
   };
  
@@ -20,13 +20,13 @@ function generateToken(user) {
 }
  
 // return basic user details
-function getCleanUser(user) {
+function getCleanUser(user, index) {
   if (!user) return null;
  
   return {
-    userId: user.userId,
-    name: user.name,
-    username: user.username,
+    userId: user.userId[index],
+    name: user.name[index],
+    username: user.username[index],
     isAdmin: user.isAdmin
   };
 }

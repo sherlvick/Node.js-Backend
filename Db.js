@@ -16,9 +16,12 @@ async function connectDb(){
 
 //DATABASE layer----queries---
 
-function isUserExists(username){
+function isUserExists(username,usertype){
     return new Promise((resolve, reject) => {
-        let sql = "SELECT COUNT(*) AS cnt FROM user WHERE username=?";
+        let sql ;
+        if(usertype=="org") sql = "SELECT COUNT(*) AS cnt FROM employer WHERE username=?";
+        else sql = "SELECT COUNT(*) AS cnt FROM user WHERE username=?";
+        
         con.query(sql, [username], (error, results) => {
         if (error) {
             reject(console.error(error.message));
@@ -32,9 +35,11 @@ function isUserExists(username){
     });
 }
 
-function getRecord(username){
+function getRecord(username,usertype){
     return new Promise((resolve, reject) => {
-        let sql = `SELECT * FROM user WHERE username=?`;
+        let sql ;
+        if(usertype=="org") sql = `SELECT * FROM employer WHERE username=?`;
+        else sql = `SELECT * FROM user WHERE username=?`;        
         con.query(sql, [username], (error, results) => {
             if (error) {
                 reject(console.error(error.message));
@@ -50,9 +55,12 @@ function getRecord(username){
     });
 }
 
-function saveUser(uid,user,name,pwd){
-    let sql = `INSERT INTO user(userId,name,username,password)
+function saveUser(uid,user,name,pwd,usertype){
+    let sql; 
+    if(usertype=="org") sql = `INSERT INTO employer(userId,name,username,password)
     VALUES(?,?,?,?)`;
+    else sql = `INSERT INTO user(userId,name,username,password)
+    VALUES(?,?,?,?)`; 
     con.query(sql, [uid,name,user,pwd], (error, results) => {
         if (error) {
             return console.error(error.message);

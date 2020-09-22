@@ -27,9 +27,10 @@ app.use(bodyParser.urlencoded({ extended: true }));//Returns middleware that onl
 app.post('/signin', function (req, res) {
     const user = req.body.username;
     const pwd = req.body.password;
+    const usertype = req.body.usertype;
    
     // return 400 status if username/password is not exist
-    if (!user || !pwd) {
+    if (!user || !pwd || !usertype) {
       return res.status(400).json({
         error: true,
         message: "Username or Password is required."
@@ -37,8 +38,8 @@ app.post('/signin', function (req, res) {
     }
     
     // return 401 status if the credential is not match.
-    async function validateLogin(user){
-      const count = await Db.isUserExists(user);
+    async function validateLogin(user,usertype){
+      const count = await Db.isUserExists(user,usertype);
       console.log('after await', count);
       if (!count){
         return res.status(402).json({
@@ -46,7 +47,7 @@ app.post('/signin', function (req, res) {
           message: "Username does not exist. Signup required."
         });
       }
-      const record = await Db.getRecord(user);
+      const record = await Db.getRecord(user,usertype);
       if (pwd !== record['password']){
         return res.status(401).json({
           error: true,
@@ -57,7 +58,7 @@ app.post('/signin', function (req, res) {
       const userObj = utils.getCleanUser(user, record['name'], record['userId']);
       return res.json({ user: userObj, token });
     }
-    validateLogin(user);
+    validateLogin(user,usertype);
   });
 
   // ----------------------------------------
@@ -65,18 +66,18 @@ app.post('/signin', function (req, res) {
     const name = req.body.name;
     const user = req.body.username;
     const pwd = req.body.password;
+    const usertype = req.body.usertype;
     const uid = uuidv4();
-    
     // return 400 status if username/password is not exist
-    if (!user || !pwd || !name) {
+    if (!user || !pwd || !name || !usertype) {
       return res.status(400).json({
         error: true,
-        message: "Username/Password/Name is required."
+        message: "All fields are required."
       });
     }
     //return 402 status if username already exists
-    async function userNameExist(user) {
-      const count = await Db.isUserExists(user);
+    async function userNameExist(user,usertype) {
+      const count = await Db.isUserExists(user,usertype);
       console.log('after await', count);
       if (count) {
         return res.status(402).json({
@@ -84,15 +85,20 @@ app.post('/signin', function (req, res) {
           message: "Username already exists."
         });
       }
-      Db.saveUser(uid,user,name,pwd);
+      Db.saveUser(uid,user,name,pwd,usertype);
       const token = utils.generateToken(user, name, uid);
       const userObj = utils.getCleanUser(user, name, uid);
       console.log("User created");
-      console.log(user, name, pwd, uid)
+      console.log(user, name, pwd, uid);
       return res.json({ user: userObj, token });
       }
-    userNameExist(user);//calling isUserExist function if not saving in DB
+    userNameExist(user,usertype);//calling isUserExist function if not saving in DB
   });
+
+  app.post('/saveProfile', function(req, res) {
+    var email = req.body.email;
+    console.log(email);
+  })
 
   //------------------------------------------------
   // verify the token and return it if it's valid
@@ -111,6 +117,7 @@ app.post('/signin', function (req, res) {
         error: true,
         message: "Invalid token."
       });
+      
       async function maintainBrowserRefresh(user){
         const count = await Db.isUserExists(user.username);
         const record = await Db.getRecord(user.username);

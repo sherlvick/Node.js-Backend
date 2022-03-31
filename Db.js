@@ -4,7 +4,7 @@ async function connectDb(){
     con = mysql.createConnection({
         host: "localhost",
         user: "root",
-        password: "sherlvick@005",
+        password: "############",
         database: "Ecommerce"
     });
     
